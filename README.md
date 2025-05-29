@@ -5,23 +5,27 @@ A modern e-commerce platform built with Next.js, TypeScript, and Tailwind CSS.
 ## System Architecture
 
 ### Frontend
-- Next.js 14 (App Router)
+- Next.js 15.2.4 (App Router)
+- React 19
 - TypeScript
 - Tailwind CSS
 - Radix UI Components
 - React Hook Form
 - Zod Validation
+- NextAuth.js for Authentication
 
 ### Backend
 - Next.js API Routes
 - Prisma ORM
-- PostgreSQL Database
+- MySQL Database
 - JWT Authentication
+- bcryptjs for Password Hashing
 
-### Third-Party Services
-- Stripe Payment Processing
-- AWS S3 for Image Storage
-- SendGrid for Email Notifications
+### Development Tools
+- pnpm Package Manager
+- ESLint for Linting
+- Prettier for Code Formatting
+- Git for Version Control
 
 ## Features
 
@@ -37,125 +41,37 @@ A modern e-commerce platform built with Next.js, TypeScript, and Tailwind CSS.
 - Register / Signup Page
 - User Dashboard
 - My Orders
-- Account Settings
+- Account Settings (Profile edit)
 
 ### Shopping and Checkout
-- Cart
-- Checkout
+- Cart Management
+- Checkout Process
+- Order Confirmation
 - Thank You Page
 
 ### Admin Panel
 - Admin Dashboard
-- Product Management
+- Product Management (Add/Edit/Delete)
 - Category Management
 - User Management
 - Inventory Management
 
-## API Documentation
+## Project Structure
 
-### Authentication Endpoints
-```typescript
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/logout
-GET /api/auth/me
 ```
-
-### Product Endpoints
-```typescript
-GET /api/products
-GET /api/products/:id
-POST /api/products
-PUT /api/products/:id
-DELETE /api/products/:id
-```
-
-### Cart Endpoints
-```typescript
-GET /api/cart
-POST /api/cart
-PUT /api/cart/:id
-DELETE /api/cart/:id
-```
-
-### Order Endpoints
-```typescript
-GET /api/orders
-GET /api/orders/:id
-POST /api/orders
-PUT /api/orders/:id
-```
-
-### User Endpoints
-```typescript
-GET /api/users
-GET /api/users/:id
-PUT /api/users/:id
-DELETE /api/users/:id
-```
-
-## Database Schema
-
-### Users
-```sql
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(50) DEFAULT 'customer',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Products
-```sql
-CREATE TABLE products (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  price DECIMAL(10,2) NOT NULL,
-  stock INTEGER NOT NULL,
-  category_id INTEGER REFERENCES categories(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Categories
-```sql
-CREATE TABLE categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Orders
-```sql
-CREATE TABLE orders (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  total DECIMAL(10,2) NOT NULL,
-  status VARCHAR(50) DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Order Items
-```sql
-CREATE TABLE order_items (
-  id SERIAL PRIMARY KEY,
-  order_id INTEGER REFERENCES orders(id),
-  product_id INTEGER REFERENCES products(id),
-  quantity INTEGER NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+project/
+├── app/                    # Next.js app directory
+│   ├── actions/           # Server actions
+│   ├── api/              # API routes
+│   ├── admin/            # Admin pages
+│   └── [other pages]     # Public and user pages
+├── components/            # Reusable React components
+├── lib/                  # Utility functions and configurations
+├── prisma/              # Database schema and migrations
+├── public/              # Static assets
+├── styles/              # Global styles
+├── hooks/               # Custom React hooks
+└── contexts/            # React context providers
 ```
 
 ## Getting Started
@@ -169,7 +85,17 @@ CREATE TABLE order_items (
    ```bash
    cp .env.example .env
    ```
-4. Run the development server:
+   Required environment variables:
+   ```env
+   DATABASE_URL="mysql://user:password@localhost:3306/database"
+   NEXTAUTH_SECRET="your-secret-key"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+4. Run database migrations:
+   ```bash
+   npx prisma migrate dev
+   ```
+5. Start the development server:
    ```bash
    pnpm dev
    ```
@@ -181,15 +107,41 @@ CREATE TABLE order_items (
 - Prettier for code formatting
 - TypeScript for type safety
 
-### Testing
-- Jest for unit testing
-- React Testing Library for component testing
-- Cypress for end-to-end testing
+### Database Management
+- Prisma ORM for database operations
+- MySQL as the database
+- Database migrations with Prisma
 
-### Deployment
-- Vercel for frontend deployment
-- Railway for backend deployment
-- GitHub Actions for CI/CD
+### Authentication
+- NextAuth.js for authentication
+- JWT tokens for API authentication
+- Role-based access control
+
+## Documentation
+
+The project includes comprehensive documentation in the `docs` directory:
+
+- `TECHNICAL.md`: System architecture and technical details
+- `API.md`: API endpoints and usage
+- `USER_FLOW.md`: User journeys and interactions
+- `DATABASE.md`: Database schema and relationships
+
+## Security Features
+
+- Password hashing with bcryptjs
+- JWT-based authentication
+- Protected API routes
+- Input validation with Zod
+- CSRF protection
+- Rate limiting on API routes
+
+## Performance Optimizations
+
+- Next.js server components
+- Image optimization
+- Code splitting
+- Static page generation where possible
+- Database query optimization with Prisma
 
 ## Contributing
 

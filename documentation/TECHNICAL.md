@@ -1,5 +1,114 @@
 # Technical Documentation
 
+## System Architecture
+
+### Frontend
+- **Framework**: Next.js 15.2.4 (React 19)
+- **Styling**: 
+  - Tailwind CSS
+  - Radix UI Components
+  - Custom CSS modules
+- **State Management**: React Context API
+- **Form Handling**: React Hook Form with Zod validation
+- **Authentication**: NextAuth.js
+- **UI Components**: 
+  - Radix UI primitives
+  - Custom components
+  - Lucide React icons
+  - Sonner for toast notifications
+
+### Backend
+- **Runtime**: Node.js (Next.js API routes)
+- **Database**: MySQL with Prisma ORM
+- **Authentication**: NextAuth.js with Prisma adapter
+- **API**: RESTful API endpoints using Next.js API routes
+
+### Development Tools
+- **Language**: TypeScript
+- **Package Manager**: pnpm
+- **Linting**: ESLint
+- **Code Formatting**: Prettier
+- **Version Control**: Git
+
+## Project Structure
+
+```
+project/
+├── app/                    # Next.js app directory
+│   ├── actions/           # Server actions
+│   ├── api/              # API routes
+│   ├── admin/            # Admin pages
+│   └── [other pages]     # Public and user pages
+├── components/            # Reusable React components
+├── lib/                  # Utility functions and configurations
+├── prisma/              # Database schema and migrations
+├── public/              # Static assets
+├── styles/              # Global styles
+├── hooks/               # Custom React hooks
+└── contexts/            # React context providers
+```
+
+## Key Technologies
+
+### Frontend Technologies
+- **Next.js**: App Router for routing and server components
+- **React**: UI library
+- **Tailwind CSS**: Utility-first CSS framework
+- **Radix UI**: Unstyled, accessible components
+- **React Hook Form**: Form handling
+- **Zod**: Schema validation
+- **NextAuth.js**: Authentication
+
+### Backend Technologies
+- **Prisma**: Type-safe ORM
+- **MySQL**: Database
+- **Next.js API Routes**: Backend API endpoints
+- **bcryptjs**: Password hashing
+
+### Development Tools
+- **TypeScript**: Type safety
+- **ESLint**: Code linting
+- **pnpm**: Package management
+- **Git**: Version control
+
+## Security Measures
+- Password hashing with bcryptjs
+- JWT-based authentication
+- Protected API routes
+- Input validation with Zod
+- CSRF protection
+- Rate limiting on API routes
+
+## Performance Optimizations
+- Next.js server components
+- Image optimization
+- Code splitting
+- Static page generation where possible
+- Database query optimization with Prisma
+
+## Development Workflow
+1. Local development with `pnpm dev`
+2. Type checking with TypeScript
+3. Linting with ESLint
+4. Database migrations with Prisma
+5. Build process with `pnpm build`
+6. Production deployment with `pnpm start`
+
+## Environment Setup
+Required environment variables:
+```env
+DATABASE_URL="mysql://user:password@localhost:3306/database"
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+## Build and Deployment
+1. Install dependencies: `pnpm install`
+2. Set up environment variables
+3. Run database migrations: `npx prisma migrate dev`
+4. Build the project: `pnpm build`
+5. Start the server: `pnpm start`
+
 ## System Architecture Overview
 
 ### Frontend Architecture
