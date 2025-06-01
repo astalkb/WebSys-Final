@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
   // Initialize user from localStorage after mount
@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (savedUser) {
       setUser(JSON.parse(savedUser))
     }
+    setIsLoading(false)
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
