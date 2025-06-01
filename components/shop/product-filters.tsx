@@ -8,12 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Star } from "lucide-react"
 
 const categories = [
-  { id: "electronics", name: "Electronics", count: 45 },
-  { id: "clothing", name: "Clothing", count: 32 },
-  { id: "home", name: "Home & Garden", count: 28 },
-  { id: "sports", name: "Sports", count: 19 },
-  { id: "books", name: "Books", count: 15 },
-  { id: "beauty", name: "Beauty", count: 12 },
+  { id: "vitamins", name: "Vitamins", count: 0 },
+  { id: "supplements", name: "Supplements", count: 0 },
+  { id: "health-packs", name: "Health Packs", count: 0 },
+  { id: "beauty-products", name: "Beauty Products", count: 0 },
 ]
 
 interface ProductFiltersProps {

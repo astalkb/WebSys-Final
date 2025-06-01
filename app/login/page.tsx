@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('redirect') || '/dashboard'
   const [error, setError] = useState("")
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -23,12 +25,13 @@ export default function LoginPage() {
         redirect: false,
       })
 
-      if (res?.error) {
+      if (!res?.ok) {
+        console.error("Login failed:", res)
         setError("Invalid email or password")
         return
       }
 
-      router.push("/dashboard")
+      router.push(callbackUrl)
       router.refresh()
     } catch (error) {
       setError("Something went wrong")

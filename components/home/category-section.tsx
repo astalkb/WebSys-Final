@@ -1,47 +1,39 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 
-const categories = [
-  {
-    id: 1,
-    name: "Electronics",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 156,
-  },
-  {
-    id: 2,
-    name: "Clothing",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 89,
-  },
-  {
-    id: 3,
-    name: "Home & Garden",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 234,
-  },
-  {
-    id: 4,
-    name: "Sports",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 67,
-  },
-  {
-    id: 5,
-    name: "Books",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 123,
-  },
-  {
-    id: 6,
-    name: "Beauty",
-    image: "/placeholder.svg?height=200&width=300",
-    productCount: 78,
-  },
-]
-
 export function CategorySection() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCategories(data);
+      } catch (error: any) {
+        setError(error);
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) return <div className="text-center">Loading categories...</div>;
+  if (error) return <div className="text-center text-red-500">Error loading categories.</div>;
+  if (categories.length === 0) return <div className="text-center">No categories found.</div>;
+
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
@@ -53,7 +45,7 @@ export function CategorySection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category) => (
+          {categories.map((category: any) => (
             <Link key={category.id} href={`/shop?category=${category.name.toLowerCase()}`}>
               <Card className="group hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-0">
@@ -68,7 +60,7 @@ export function CategorySection() {
                   </div>
                   <div className="p-4 text-center">
                     <h3 className="font-semibold mb-1">{category.name}</h3>
-                    <p className="text-sm text-gray-600">{category.productCount} products</p>
+                    <p className="text-sm text-gray-600">{category._count.products} products</p>
                   </div>
                 </CardContent>
               </Card>
@@ -77,5 +69,5 @@ export function CategorySection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
