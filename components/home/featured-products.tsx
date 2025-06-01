@@ -48,35 +48,60 @@ export function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product: any) => (
-            <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                <div className="relative overflow-hidden">
-                  <Image
-                    src={product.images?.[0] || "/placeholder.svg"}
-                    alt={product.name}
-                    width={300}
-                    height={300}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-4">
-                  <Badge variant="secondary" className="mb-2">
-                    {product.category?.name || "Unknown Category"}
-                  </Badge>
-                  <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-primary">${product.price}</span>
+          {products.map((product: any) => {
+            // Handle images as Json type
+            let imageUrl = "/placeholder.png"
+            const images = product.images
+            
+            if (images) {
+              try {
+                // Try to parse if it's a JSON string
+                const parsedImages = typeof images === 'string' ? JSON.parse(images) : images
+                if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+                  imageUrl = parsedImages[0]
+                } else if (typeof parsedImages === 'string') {
+                  imageUrl = parsedImages
+                }
+              } catch (e) {
+                // If parsing fails, try to use the images directly
+                if (Array.isArray(images) && images.length > 0) {
+                  imageUrl = images[0]
+                } else if (typeof images === 'string') {
+                  imageUrl = images
+                }
+              }
+            }
+
+            return (
+              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                <CardContent className="p-0">
+                  <div className="relative overflow-hidden">
+                    <Image
+                      src={imageUrl}
+                      alt={product.name}
+                      width={300}
+                      height={300}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Button asChild className="w-full">
-                  <Link href={`/product/${product.id}`}>View Details</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <div className="p-4">
+                    <Badge variant="secondary" className="mb-2">
+                      {product.category?.name || "Unknown Category"}
+                    </Badge>
+                    <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-primary">${product.price}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <Button asChild className="w-full">
+                    <Link href={`/product/${product.id}`}>View Details</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
 
         <div className="text-center mt-12">

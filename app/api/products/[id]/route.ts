@@ -51,28 +51,16 @@ export async function PUT(
       );
     }
 
-    // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!existingProduct) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
-    }
-
     const product = await prisma.product.update({
       where: { id: params.id },
       data: {
         name,
         description,
         price: parseFloat(price),
-        images: images || existingProduct.images,
+        images: images ? [images] : ["/placeholder.png"],
         categoryId,
         stock: parseInt(stock),
-        status: status || existingProduct.status,
+        status: status || "ACTIVE",
       },
       include: {
         category: true,
@@ -161,6 +149,17 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // First, delete all related cart items
+    await prisma.cartItem.deleteMany({
+      where: { productId: params.id },
+    });
+
+    // Then, delete all related order items
+    await prisma.orderItem.deleteMany({
+      where: { productId: params.id },
+    });
+
+    // Finally, delete the product
     await prisma.product.delete({
       where: { id: params.id },
     });

@@ -1,12 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { getOrderById } from "@/lib/actions/order";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function ThankYouPage({
   searchParams,
 }: {
-  searchParams: { orderId: string };
+  searchParams: { orderId?: string };
 }) {
+  if (!searchParams.orderId) {
+    redirect("/shop");
+  }
+
   const order = await getOrderById(searchParams.orderId);
 
   if (!order) {
@@ -31,7 +36,7 @@ export default async function ThankYouPage({
       </p>
       <div className="space-x-4">
         <Button asChild>
-          <Link href="/dashboard/orders">View Order</Link>
+          <Link href="/dashboard">View Order</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href="/shop">Continue Shopping</Link>

@@ -95,12 +95,25 @@ export function ProductGrid({ filters, sortBy }: ProductGridProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
+        {products.map((product) => {
+          // Handle images as Json type
+          let imageUrl = "/placeholder.png"
+          const images = product.images
+          
+          if (images) {
+            if (Array.isArray(images) && images.length > 0 && typeof images[0] === 'string') {
+              imageUrl = images[0]
+            } else if (typeof images === 'string') {
+              imageUrl = images
+            }
+          }
+
+          return (
           <Card key={product.id} className="group hover:shadow-lg transition-shadow">
             <CardContent className="p-0">
               <div className="relative overflow-hidden">
                 <Image
-                  src={product.images?.[0]?.toString() || "/placeholder.svg"}
+                    src={imageUrl}
                   alt={product.name}
                   width={300}
                   height={300}
@@ -129,7 +142,8 @@ export function ProductGrid({ filters, sortBy }: ProductGridProps) {
               </Button>
             </CardFooter>
           </Card>
-        ))}
+          )
+        })}
       </div>
 
       {products.length === 0 && (

@@ -1,75 +1,32 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, type ReactNode } from "react"
+import { useSession, signIn, signOut } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 
-interface User {
-  id: number
-  name: string
-  email: string
-  role: "user" | "admin"
-}
-
 interface AuthContextType {
-  user: User | null
+  user: any
   login: (email: string, password: string) => Promise<boolean>
   register: (name: string, email: string, password: string) => Promise<boolean>
-  logout: () => void
+  logout: () => Promise<void>
   isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status } = useSession()
   const { toast } = useToast()
 
-  // Initialize user from localStorage after mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
-    }
-    setIsLoading(false)
-  }, [])
-
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-      // Mock login - in real app, this would be an API call
-      if (email === "admin@example.com" && password === "admin") {
-        const userData: User = {
-          id: 1,
-          name: "Admin User",
-          email: "admin@example.com",
-          role: "admin",
-        }
-        setUser(userData)
-        localStorage.setItem('user', JSON.stringify(userData))
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        })
-        return true
-      } else if (email === "user@example.com" && password === "user") {
-        const userData: User = {
-          id: 2,
-          name: "John Doe",
-          email: "user@example.com",
-          role: "user",
-        }
-        setUser(userData)
-        localStorage.setItem('user', JSON.stringify(userData))
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        })
-        return true
-      } else {
+      if (result?.error) {
         toast({
           title: "Login failed",
           description: "Invalid email or password.",
@@ -77,6 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         return false
       }
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      })
+      return true
     } catch (error) {
       toast({
         title: "Login failed",
@@ -84,26 +47,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       })
       return false
-    } finally {
-      setIsLoading(false)
     }
   }
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      })
 
-      // Mock registration
-      const userData: User = {
-        id: Date.now(),
-        name,
-        email,
-        role: "user",
+      if (!response.ok) {
+        throw new Error("Registration failed")
       }
-      setUser(userData)
-      localStorage.setItem('user', JSON.stringify(userData))
 
       toast({
         title: "Account created!",
@@ -117,21 +76,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       })
       return false
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
+  const logout = async () => {
+    await signOut()
     toast({
       title: "Logged out",
       description: "You have been logged out successfully.",
     })
   }
 
-  return <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user: session?.user ?? null,
+        login,
+        register,
+        logout,
+        isLoading: status === "loading",
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

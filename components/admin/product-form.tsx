@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Category } from "@prisma/client"
+import Image from "next/image"
+import { Upload } from "lucide-react"
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -52,6 +54,8 @@ interface ProductFormProps {
 export function ProductForm({ initialData, onSubmit }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const { toast } = useToast()
 
   const form = useForm<ProductFormValues>({
@@ -62,7 +66,7 @@ export function ProductForm({ initialData, onSubmit }: ProductFormProps) {
       price: initialData?.price?.toString() || "",
       categoryId: initialData?.categoryId || "",
       stock: initialData?.stock?.toString() || "",
-      images: Array.isArray(initialData?.images) ? initialData.images.join(",") : "",
+      images: Array.isArray(initialData?.images) ? initialData.images[0] || "" : "",
     },
   })
 
@@ -84,6 +88,47 @@ export function ProductForm({ initialData, onSubmit }: ProductFormProps) {
 
     fetchCategories()
   }, [toast])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setIsUploading(true)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('productId', initialData?.id || 'new')
+
+      const response = await fetch('/api/upload/product', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      
+      // Update the form with the new image URL
+      form.setValue('images', data.url)
+      setPreviewImage(data.url)
+      
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      })
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const handleSubmit = async (data: ProductFormValues) => {
     try {
@@ -194,9 +239,30 @@ export function ProductForm({ initialData, onSubmit }: ProductFormProps) {
           name="images"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Images (comma-separated URLs)</FormLabel>
+              <FormLabel>Product Image</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image1.jpg,https://example.com/image2.jpg" {...field} />
+                <div className="flex items-center gap-4">
+                  <div className="relative h-32 w-32">
+                    {(previewImage || field.value) && (
+                      <Image
+                        src={previewImage || field.value}
+                        alt="Product preview"
+                        fill
+                        className="object-cover rounded-md"
+                        priority
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                    />
+                    {isUploading && <p className="text-sm text-muted-foreground mt-1">Uploading...</p>}
+                  </div>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

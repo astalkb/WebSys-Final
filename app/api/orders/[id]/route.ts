@@ -6,9 +6,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const orderId = params.id;
     const order = await prisma.order.findUnique({
       where: {
-        id: params.id,
+        id: orderId,
       },
       include: {
         user: {
@@ -48,6 +49,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const orderId = params.id;
     const body = await request.json();
     const { status } = body;
 
@@ -60,7 +62,7 @@ export async function PUT(
 
     const order = await prisma.order.update({
       where: {
-        id: params.id,
+        id: orderId,
       },
       data: {
         status,

@@ -4,6 +4,7 @@ import { join } from 'path'
 async function ensureDirectories() {
   const dirs = [
     join(process.cwd(), 'public', 'team'),
+    join(process.cwd(), 'public', 'products'),
   ]
 
   for (const dir of dirs) {

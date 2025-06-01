@@ -6,9 +6,56 @@ import { Input } from "@/components/ui/input"
 import { Trash2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export function CartContent() {
   const { items, total, removeItem, updateQuantity, isLoading } = useCart()
+  const [quantityErrors, setQuantityErrors] = useState<{ [key: string]: string | null }>({})
+  const [quantities, setQuantities] = useState<{ [key: string]: number | '' }>({})
+  const router = useRouter()
+
+  // Calculate total based on local quantities
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => {
+      const quantity = quantities[item.id]
+      const itemQuantity = typeof quantity === 'number' ? quantity : 0
+      return sum + (item.product.price * itemQuantity)
+    }, 0)
+  }
+
+  const getItemQuantity = (itemId: string) => {
+    const quantity = quantities[itemId]
+    return typeof quantity === 'number' ? quantity : 0
+  }
+
+  const handleQuantityChange = (itemId: string, value: string) => {
+    const numValue = value === '' ? '' : parseInt(value)
+    if (value === '' || (typeof numValue === 'number' && !isNaN(numValue) && numValue > 0)) {
+      setQuantities(prev => ({ ...prev, [itemId]: numValue }))
+      setQuantityErrors(prev => ({ ...prev, [itemId]: null }))
+    } else {
+      setQuantityErrors(prev => ({ ...prev, [itemId]: 'Please enter a positive number' }))
+    }
+  }
+
+  const handleQuantityBlur = (itemId: string) => {
+    const quantity = quantities[itemId]
+    if (typeof quantity === 'number' && quantity > 0) {
+      updateQuantity(itemId, quantity)
+    }
+  }
+
+  const hasErrors = Object.values(quantityErrors).some(error => error !== null)
+
+  // Initialize quantities when items change
+  useEffect(() => {
+    const initialQuantities = items.reduce((acc, item) => ({
+      ...acc,
+      [item.id]: item.quantity
+    }), {})
+    setQuantities(initialQuantities)
+  }, [items])
 
   if (isLoading) {
     return (
@@ -68,10 +115,14 @@ export function CartContent() {
                     <Input
                       type="number"
                       min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                      className="w-20"
+                      value={quantities[item.id] ?? item.quantity}
+                      onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                      onBlur={() => handleQuantityBlur(item.id)}
+                      className={`w-20 ${quantityErrors[item.id] ? 'border-red-500' : ''}`}
                     />
+                    {quantityErrors[item.id] && (
+                      <p className="text-sm text-red-500">{quantityErrors[item.id]}</p>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -82,7 +133,7 @@ export function CartContent() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">₱{(item.product.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-medium">₱{(item.product.price * getItemQuantity(item.id)).toFixed(2)}</p>
                 </div>
               </div>
             )
@@ -94,7 +145,7 @@ export function CartContent() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>₱{total.toFixed(2)}</span>
+                <span>₱{calculateTotal().toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
@@ -103,13 +154,26 @@ export function CartContent() {
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between font-medium">
                   <span>Total</span>
-                  <span>₱{total.toFixed(2)}</span>
+                  <span>₱{calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
-            <Link href="/checkout" className="w-full">
-              <Button className="w-full mt-6">Proceed to Checkout</Button>
-            </Link>
+            <Button
+              className="w-full"
+              disabled={hasErrors}
+              onClick={() => {
+                // Update all quantities before proceeding to checkout
+                items.forEach(item => {
+                  const quantity = quantities[item.id]
+                  if (typeof quantity === 'number' && quantity > 0) {
+                    updateQuantity(item.id, quantity)
+                  }
+                })
+                router.push('/checkout')
+              }}
+            >
+              Proceed to Checkout
+            </Button>
           </div>
         </div>
       </div>

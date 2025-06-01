@@ -3,6 +3,7 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUserOrders } from "@/lib/actions/order"
+import { OrderList } from "@/components/dashboard/order-list"
 
 export const metadata: Metadata = {
   title: "Dashboard | ModernShop",
@@ -62,35 +63,17 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
       <div className="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+            <CardTitle>My Orders</CardTitle>
             <CardDescription>
-              Your latest {orders.length} orders
+              View and manage your orders
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {orders.length === 0 ? (
-              <p className="text-center text-muted-foreground">No orders yet</p>
-            ) : (
-              <div className="space-y-4">
-                {orders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0">
-                    <div>
-                      <p className="font-medium">Order #{order.id}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">₱{order.total.toFixed(2)}</p>
-                      <p className="text-sm text-muted-foreground">{order.status}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <OrderList orders={orders} />
           </CardContent>
         </Card>
       </div>

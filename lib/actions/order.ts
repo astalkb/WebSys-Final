@@ -1,10 +1,12 @@
 "use server"
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { getCart } from "./cart";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { CartItem, Product } from "@prisma/client";
+import { CartItem, Product, OrderStatus } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 type CartItemWithProduct = CartItem & {
   product: Product;
@@ -15,60 +17,89 @@ type CartWithItems = {
   items: CartItemWithProduct[];
 };
 
-export async function createOrder(formData: FormData) {
-  const cart = await getCart() as CartWithItems | null;
-  
-  if (!cart || cart.items.length === 0) {
-    throw new Error("Cart is empty");
-  }
+interface OrderItem {
+  productId: string
+  quantity: number
+  price: number
+}
 
-  const shippingInfo = {
-    firstName: formData.get("firstName") as string,
-    lastName: formData.get("lastName") as string,
-    address: formData.get("address") as string,
-    city: formData.get("city") as string,
-    postalCode: formData.get("postalCode") as string,
-  };
+interface ShippingInfo {
+  firstName: string
+  lastName: string
+  address: string
+  city: string
+  postalCode: string
+}
 
-  const paymentInfo = {
-    cardNumber: formData.get("cardNumber") as string,
-    expiryDate: formData.get("expiryDate") as string,
-    cvv: formData.get("cvv") as string,
-  };
+interface PaymentInfo {
+  cardNumber: string
+  expiryDate: string
+  cvv: string
+}
 
-  // Calculate total from cart items
-  const total = cart.items.reduce((sum, item) => {
-    return sum + (item.product.price * item.quantity);
-  }, 0);
+export async function createOrder(total: number, items: OrderItem[], shippingInfo: ShippingInfo, paymentInfo: PaymentInfo) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      throw new Error("User not authenticated");
+    }
 
-  // In a real application, you would process the payment here
-  // For this example, we'll just create the order
-
-  const order = await prisma.order.create({
-    data: {
-      userId: "user-id", // This should come from the authenticated user
-      total,
-      shippingInfo: shippingInfo as any,
-      paymentInfo: paymentInfo as any,
-      items: {
-        create: cart.items.map((item: CartItemWithProduct) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price,
-        })),
+    // Create the order with the authenticated user's ID
+    const order = await prisma.order.create({
+      data: {
+        userId: session.user.id,
+        total,
+        status: OrderStatus.PROCESSING,
+        shippingInfo,
+        paymentInfo,
+        items: {
+          create: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price
+          }))
+        }
       },
-    },
-  });
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
 
-  // Clear the cart after successful order
-  await prisma.cartItem.deleteMany({
-    where: {
-      cartId: cart.id,
-    },
-  });
+    return order;
+  } catch (error) {
+    console.error("Error creating order:", error);
+    throw new Error("Failed to create order");
+  }
+}
 
-  revalidatePath("/dashboard/orders");
-  redirect(`/thank-you?orderId=${order.id}`);
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      throw new Error("User not authenticated");
+    }
+
+    const order = await prisma.order.update({
+      where: {
+        id: orderId,
+        userId: session.user.id,
+      },
+      data: {
+        status
+      },
+    });
+
+    return order;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw new Error("Failed to update order status");
+  }
 }
 
 export async function getOrderById(orderId: string) {
@@ -113,9 +144,15 @@ export async function getAllOrders() {
 
 export async function getUserOrders() {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      throw new Error("User not authenticated")
+    }
+
     const orders = await prisma.order.findMany({
       where: {
-        userId: "current-user-id" // This will be replaced with actual user ID from session
+        userId: session.user.id
       },
       include: {
         items: {

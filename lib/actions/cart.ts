@@ -164,4 +164,31 @@ export async function removeFromCart(itemId: string) {
   })
 
   return getCart()
+}
+
+export async function clearCart() {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const cart = await prisma.cart.findFirst({
+    where: {
+      userId: session.user.id,
+    },
+  })
+
+  if (!cart) {
+    throw new Error("Cart not found")
+  }
+
+  // Delete all cart items
+  await prisma.cartItem.deleteMany({
+    where: {
+      cartId: cart.id,
+    },
+  })
+
+  return getCart()
 } 

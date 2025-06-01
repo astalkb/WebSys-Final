@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         name,
         description,
         price: parseFloat(price),
-        images: images || [],
+        images: images ? [images] : ["/placeholder.png"],
         categoryId,
         stock: parseInt(stock),
         status: status || "ACTIVE",

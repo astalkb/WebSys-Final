@@ -24,7 +24,8 @@ export default function ProductPage() {
   const params = useParams()
   const [product, setProduct] = useState<Product | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState<number | ''>(1)
+  const [quantityError, setQuantityError] = useState<string | null>(null)
   const { addItem } = useCart()
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function ProductPage() {
   }, [params.id])
 
   const handleAddToCart = async () => {
-    if (!product) return
+    if (!product || quantity === '') return
 
     try {
       await addItem(product.id, quantity)
@@ -111,13 +112,24 @@ export default function ProductPage() {
                 min="1"
                 max={product.stock}
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value))}
-                className="w-20 px-2 py-1 border rounded"
+                onChange={(e) => {
+                  const value = e.target.value === '' ? '' : parseInt(e.target.value)
+                  if (value === '' || (!isNaN(value) && value > 0)) {
+                    setQuantity(value === '' ? '' : value)
+                    setQuantityError(null)
+                  } else {
+                    setQuantityError('Please enter a positive number')
+                  }
+                }}
+                className={`w-20 px-2 py-1 border rounded ${quantityError ? 'border-red-500' : ''}`}
               />
+              {quantityError && (
+                <p className="text-sm text-red-500 mt-1">{quantityError}</p>
+              )}
             </div>
             <Button
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={product.stock === 0 || quantityError !== null || quantity === ''}
               className="w-full"
             >
               {product.stock === 0 ? "Out of Stock" : "Add to Cart"}

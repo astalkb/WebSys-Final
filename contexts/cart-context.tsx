@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { addToCart as addToCartAction, removeFromCart as removeFromCartAction, updateCartItem as updateCartItemAction, getCart } from "@/lib/actions/cart-actions"
+import { addToCart as addToCartAction, removeFromCart as removeFromCartAction, updateCartItem as updateCartItemAction, getCart, clearCart as clearCartAction } from "@/lib/actions/cart"
 import { Cart, CartItem } from "@/lib/types"
 import { useRouter } from "next/navigation"
 
@@ -25,7 +25,7 @@ const CartContext = createContext<{
   addItem: (productId: string, quantity: number) => Promise<void>
   removeItem: (itemId: string) => Promise<void>
   updateQuantity: (itemId: string, quantity: number) => Promise<void>
-  clearCart: () => void
+  clearCart: () => Promise<void>
   items: CartItem[]
   total: number
   isLoading: boolean
@@ -79,12 +79,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = async (productId: string, quantity: number) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true })
-      const formData = new FormData()
-      formData.append("productId", productId)
-      formData.append("quantity", (quantity || 1).toString())
       
       try {
-        await addToCartAction(formData)
+        await addToCartAction(productId, quantity)
         const cart = await getCart()
         if (cart) {
           dispatch({ type: "SET_CART", payload: cart })
@@ -120,9 +117,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeItem = async (itemId: string) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true })
-      const formData = new FormData()
-      formData.append("itemId", itemId)
-      await removeFromCartAction(formData)
+      await removeFromCartAction(itemId)
       
       const cart = await getCart()
       if (cart) {
@@ -147,10 +142,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = async (itemId: string, quantity: number) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true })
-      const formData = new FormData()
-      formData.append("itemId", itemId)
-      formData.append("quantity", quantity.toString())
-      await updateCartItemAction(formData)
+      await updateCartItemAction(itemId, quantity)
       
       const cart = await getCart()
       if (cart) {
@@ -168,8 +160,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const clearCart = () => {
-    dispatch({ type: "CLEAR_CART" })
+  const clearCart = async () => {
+    try {
+      dispatch({ type: "SET_LOADING", payload: true })
+      await clearCartAction()
+      dispatch({ type: "CLEAR_CART" })
+    } catch (error) {
+      console.error("Error clearing cart:", error)
+      toast({
+        title: "Error",
+        description: "Failed to clear cart. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false })
+    }
   }
 
   return (
@@ -181,7 +186,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         clearCart,
         items: state.items,
-        total: state.total,
+        total: state.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
         isLoading: state.isLoading,
       }}
     >
